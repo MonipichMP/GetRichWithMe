@@ -1,21 +1,27 @@
 import 'package:flutter/material.dart';
-import 'package:get_rich_with_me/home_page.dart';
+import 'package:get_rich_with_me/pages/home_page.dart';
+import 'package:get_rich_with_me/providers/exchange_rate_provider.dart';
+import 'package:provider/provider.dart';
 
 void main() {
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Get Rich With Me',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ExchangeRateProvider()),
+      ],
+      child: MaterialApp(
+        title: 'Get Rich With Me',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+          visualDensity: VisualDensity.adaptivePlatformDensity,
+        ),
+        home: HomePage(),
       ),
-      home: HomePage(),
     );
   }
 }
