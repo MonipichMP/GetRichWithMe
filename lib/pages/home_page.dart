@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:get_rich_with_me/providers/exchange_rate_provider.dart';
+import 'package:get_rich_with_me/apis/exchange_rate_api.dart';
+import 'package:get_rich_with_me/models/exchange_rate.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
+
+final exchangeRateNotifier = Provider((ref) => ExchangeRateAPI());
+final responseProvider = FutureProvider<ExchangeRate>((ref) async {
+  final httpClient = ref.read(exchangeRateNotifier);
+  return httpClient.getExchangeRate("BTC");
+});
 
 class HomePage extends StatefulWidget {
   @override
@@ -10,14 +17,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-
-  @override
-  void initState() {
-    super.initState();
-    Provider.of<ExchangeRateProvider>(context, listen: false)
-        .getExChangeRateData("BTC");
-  }
-
   @override
   Widget build(BuildContext context) {
     print("build scaffold");
@@ -63,27 +62,30 @@ class _HomePageState extends State<HomePage> {
           SizedBox(height: 14),
           titleAndRefreshWidget(),
           SizedBox(height: 14),
-          Consumer<ExchangeRateProvider>(
-            builder: (context, data, child) {
-              if (data.dataExchangeRate.rate == null) {
-                return CircularProgressIndicator(
-                  backgroundColor: Colors.white70,
-                );
-              } else {
+          Consumer(builder: (context, watch, child) {
+            final responseAsync = watch(responseProvider);
+            return responseAsync.map(
+              data: (data) {
                 return Expanded(
                   child: ListView(
                     children: [
                       buildContainer(
                         "assets/images/Bitcoin.svg",
-                        data.dataExchangeRate.rate,
-                        data.dataExchangeRate.lastRefreshed,
-                      ),
+                        data.value.rate,
+                        data.value.lastRefreshed,
+                      )
                     ],
                   ),
                 );
-              }
-            },
-          ),
+              },
+              loading: (_) => Center(
+                child: CircularProgressIndicator(
+                  backgroundColor: Colors.white10,
+                ),
+              ),
+              error: (e) => Text(e.error),
+            );
+          }),
         ],
       ),
     );
@@ -98,22 +100,6 @@ class _HomePageState extends State<HomePage> {
         width: double.infinity,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          gradient: LinearGradient(
-            colors: [
-              Colors.blueAccent,
-              Colors.deepPurpleAccent,
-              Colors.redAccent,
-              Colors.yellowAccent,
-            ],
-            stops: [
-              0.1,
-              0.2,
-              0.8,
-              0.9,
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -178,10 +164,7 @@ class _HomePageState extends State<HomePage> {
         ),
         IconButton(
           icon: Icon(Icons.refresh, color: Colors.white70),
-          onPressed: () {
-            Provider.of<ExchangeRateProvider>(context, listen: false)
-                .getExChangeRateData("BTC");
-          },
+          onPressed: () {},
         )
       ],
     );
